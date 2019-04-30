@@ -1,0 +1,49 @@
+{
+  "name": "pinfo-logic-games",
+  "version": "1.0.0",
+  "description": "A full-stack website with a generator, play platform and solver of logic games like Sudoku and others.",
+  "main": "index.js",
+  "repository": "https://github.com/147loch/pinfo-logic-games.git",
+  "author": "Loïc Herman <contact@147lo.ch>",
+  "license": "AGPL-3.0",
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "dev": "NODE_ENV=development nodemon ./index.js",
+    "start": "node ./index.js"
+  },
+  "private": true,
+  "dependencies": {
+    "browser-sync": "^2.26.3",
+    "compression": "^1.7.4",
+    "connect-browser-sync": "^2.1.0",
+    "connect-slashes": "^1.4.0",
+    "cookie-parser": "~1.4.3",
+    "debug": "~2.6.9",
+    "esm": "^3.2.22",
+    "express": "~4.16.0",
+    "express-naked-redirect": "^0.1.3",
+    "helmet": "^3.16.0",
+    "http-errors": "~1.6.2",
+    "jquery": "^3.4.0",
+    "lodash": "^4.17.11",
+    "morgan": "~1.9.0",
+    "pug": "2.0.0-beta11",
+    "require-directory": "^2.1.1",
+    "url-pattern": "^1.0.3"
+  },
+  "devDependencies": {
+    "babel-eslint": "^9.0.0",
+    "eslint": "^5.14.1",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-config-prettier": "^4.1.0",
+    "eslint-config-wesbos": "0.0.19",
+    "eslint-plugin-html": "^5.0.3",
+    "eslint-plugin-import": "^2.16.0",
+    "eslint-plugin-jsx-a11y": "^6.2.1",
+    "eslint-plugin-prettier": "^3.0.1",
+    "eslint-plugin-react": "^7.12.4",
+    "eslint-plugin-react-hooks": "^1.3.0",
+    "prettier": "^1.16.4"
+  }
+}

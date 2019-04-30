@@ -1,0 +1,6 @@
+{
+  "extends": ["wesbos"],
+  "rules": {
+    "no-restricted-syntax": "off"
+  }
+}
