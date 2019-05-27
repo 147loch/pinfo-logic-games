@@ -1,10 +1,11 @@
 import Game from '../../Game';
 import SudokuArray from './SudokuArray';
 import SudokuConstants from './SudokuConstants';
-import SudokuSolver from './SudokuSolver';
 import SudokuUtils from './SudokuUtils';
 import SudokuHistory from './SudokuHistory';
 import SudokuLogItem from './SudokuLogItem';
+import SudokuSolver from './SudokuSolver';
+import SudokuSolverMethods from './SudokuSolverMethods';
 
 /*
  * TODO:
@@ -13,16 +14,56 @@ import SudokuLogItem from './SudokuLogItem';
  * - Convert la réponse de init en objet.
  */
 
+const aggregation = (baseClass, ...mixins) => {
+  const copyProps = (target, source) => {
+    // this function copies all properties and symbols, filtering out some special ones
+    Object.getOwnPropertyNames(source)
+      .concat(Object.getOwnPropertySymbols(source))
+      .forEach(prop => {
+        if (
+          !prop.match(
+            /^(?:constructor|prototype|arguments|caller|name|bind|call|apply|toString|length)$/
+          )
+        )
+          Object.defineProperty(
+            target,
+            prop,
+            Object.getOwnPropertyDescriptor(source, prop)
+          );
+      });
+  };
+  class base extends baseClass {
+    constructor(...args) {
+      super(...args);
+      mixins.forEach(Mixin => {
+        copyProps(this, new Mixin());
+      });
+    }
+  }
+  mixins.forEach(mixin => {
+    // outside contructor() to allow aggregation(A,B,C).staticFunction() to be called etc.
+    copyProps(base.prototype, mixin.prototype);
+    copyProps(base, mixin);
+  });
+  return base;
+};
+
 /**
  * Sudoku Game generator and solver
  * @typedef {SudokuGame} SudokuGame
+ * @extends {Game}
+ * @extends {SudokuSolver}
+ * @extends {SudokuSolverMethods}
  */
-export default class SudokuGame extends Game {
-  constructor(app, id) {
-    super(app, id, 'sudoku');
+export default class SudokuGame extends aggregation(
+  Game,
+  SudokuSolverMethods,
+  SudokuSolver
+) {
+  constructor() {
+    super();
 
     // this.settings = new SudokuSettings(this.app, this.id);
-    this.solver = new SudokuSolver(this);
 
     this.puzzle = new SudokuArray(SudokuConstants.BOARD_SIZE);
     this.solution = new SudokuArray(SudokuConstants.BOARD_SIZE);
@@ -39,14 +80,22 @@ export default class SudokuGame extends Game {
         recordHistory: true,
         logHistory: true,
       },
-      this.solver.isSolved
+      this.isSolved
     );
 
     this.lastSolveRound = 0;
   }
 
+  get givenCount() {
+    let count = 0;
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      if (this.puzzle[i] !== 0) count += 1;
+    }
+    return count;
+  }
+
   // get puzzle() {
-  //   return this._puzzle;
+  //   return this.puzzle;
   // }
 
   get puzzleString() {
@@ -59,7 +108,7 @@ export default class SudokuGame extends Game {
 
   // set puzzle(initPuzzle) {
   //   for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
-  //     this._puzzle[i] = initPuzzle[i];
+  //     this.puzzle[i] = initPuzzle[i];
   //   }
   //   return this.reset();
   // }
@@ -73,6 +122,8 @@ export default class SudokuGame extends Game {
     if (symmetry === SudokuConstants.symmetryList.RANDOM)
       symmetry = SudokuConstants.randomSymmetry;
     else symmetry = _symmetry;
+    console.log(symmetry)
+    // symmetry = SudokuConstants.symmetryList.NONE;
 
     this.history.enabled = false;
 
@@ -80,13 +131,13 @@ export default class SudokuGame extends Game {
 
     this.shuffleRandomArrays();
 
-    this.solver.solve();
+    this.solve();
 
     if (symmetry === SudokuConstants.symmetryList.NONE)
-      this.solver.rollbackNonGuesses();
+      this.rollbackNonGuesses();
 
-    for (let i = 0; i < SudokuUtils.BOARD_SIZE; i += 1) {
-      this._puzzle[i] = this.solution[i];
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      this.puzzle[i] = this.solution[i];
     }
 
     this.shuffleRandomArrays();
@@ -137,32 +188,29 @@ export default class SudokuGame extends Game {
         }
 
         const savedValue = this.puzzle[pos];
-        this._puzzle[pos] = 0;
+        this.puzzle[pos] = 0;
         let savedSym1 = 0;
         if (posSym1 >= 0) {
-          savedSym1 = this._puzzle[posSym1];
-          this._puzzle[posSym1] = 0;
+          savedSym1 = this.puzzle[posSym1];
+          this.puzzle[posSym1] = 0;
         }
         let savedSym2 = 0;
         if (posSym2 >= 0) {
-          savedSym2 = this._puzzle[posSym2];
-          this._puzzle[posSym2] = 0;
+          savedSym2 = this.puzzle[posSym2];
+          this.puzzle[posSym2] = 0;
         }
         let savedSym3 = 0;
         if (posSym3 >= 0) {
-          savedSym3 = this._puzzle[posSym3];
-          this._puzzle[posSym3] = 0;
+          savedSym3 = this.puzzle[posSym3];
+          this.puzzle[posSym3] = 0;
         }
 
         this.reset();
-        if (this.solver.countSolutions(2, true) > 1) {
-          this._puzzle[pos] = savedValue;
-          if (posSym1 >= 0 && savedSym1 !== 0)
-            this._puzzle[posSym1] = savedSym1;
-          if (posSym2 >= 0 && savedSym2 !== 0)
-            this._puzzle[posSym2] = savedSym2;
-          if (posSym3 >= 0 && savedSym3 !== 0)
-            this._puzzle[posSym3] = savedSym3;
+        if (this.countSolutions(2, true) > 1) {
+          this.puzzle[pos] = savedValue;
+          if (posSym1 >= 0 && savedSym1 !== 0) this.puzzle[posSym1] = savedSym1;
+          if (posSym2 >= 0 && savedSym2 !== 0) this.puzzle[posSym2] = savedSym2;
+          if (posSym3 >= 0 && savedSym3 !== 0) this.puzzle[posSym3] = savedSym3;
         }
       }
     }
@@ -230,7 +278,7 @@ export default class SudokuGame extends Game {
 
         if (this.possibilities[valPos] !== 0) return false;
         this.mark(pos, round, val);
-        SudokuHistory.addHistoryItem(
+        this.history.addHistoryItem(
           new SudokuLogItem(
             round,
             SudokuConstants.debugLogTypesList.GIVEN,
@@ -412,7 +460,7 @@ export default class SudokuGame extends Game {
       let solutions = 0;
 
       if (havePuzzle) {
-        if (countSolutions) solutions = this.solver.countSolutions();
+        if (countSolutions) solutions = this.countSolutions();
 
         if (
           printHistory ||
@@ -420,7 +468,7 @@ export default class SudokuGame extends Game {
           printStats ||
           difficulty !== SudokuConstants.difficultyList.UNKOWN
         )
-          this.solver.solve();
+          this.solve();
 
         if (action === 'GENERATE') {
           if (
@@ -460,7 +508,6 @@ export default class SudokuGame extends Game {
 
         if (printStats) {
           const {
-            givenCount,
             singleCount,
             hiddenSingleCount,
             nakedPairCount,
@@ -469,10 +516,9 @@ export default class SudokuGame extends Game {
             boxLineReductionCount,
             guessCount,
             backtrackCount,
-            difficultyString,
           } = this.history;
 
-          console.log(`Number of Givens: ${givenCount}`);
+          console.log(`Number of Givens: ${this.givenCount}`);
           console.log(`Number of Singles: ${singleCount}`);
           console.log(`Number of Hidden Singles: ${hiddenSingleCount}`);
           console.log(`Number of Naked Pairs: ${nakedPairCount}`);
@@ -485,14 +531,14 @@ export default class SudokuGame extends Game {
           );
           console.log(`Number of Guesses: ${guessCount}`);
           console.log(`Number of Backtracks: ${backtrackCount}`);
-          console.log(`Difficulty: ${difficultyString}`);
+          console.log(`Difficulty: ${this.difficultyString}`);
         }
 
         puzzleCount += 1;
       }
     }
 
-    const applicationDoneTime = SudokuUtils.getMicroSeconds();
+    const applicationDoneTime = SudokuUtils.getMicroSeconds;
     if (timer) {
       const t = (applicationDoneTime - applicationStartTime) / 1000000;
       console.log(
@@ -503,3 +549,28 @@ export default class SudokuGame extends Game {
     }
   }
 }
+
+// const deepMethods = x =>
+//   x &&
+//   x !== Object.prototype &&
+//   Object.getOwnPropertyNames(x)
+//     .filter(
+//       name =>
+//         !!(Object.getOwnPropertyDescriptor(x, name) || {}).get ||
+//         typeof x[name] === 'function'
+//     )
+//     .concat(deepMethods(Object.getPrototypeOf(x)) || []);
+// const classMethods = x =>
+//   Array.from(new Set(deepMethods(x))).filter(
+//     name => name !== 'constructor' && !~name.indexOf('__') // eslint-disable-line no-bitwise
+//   );
+
+// const solver = new SudokuSolver();
+// SudokuGame.prototype.solver = {};
+// classMethods(solver).forEach(k =>
+//   (Object.getOwnPropertyDescriptor(solver, k) || {}).get
+//     ? (SudokuGame.prototype.solver[k] = solver[k])
+//     : ''
+// );
+
+// console.log(classMethods(solver));

@@ -24,7 +24,7 @@ Sudoku.init({
   timer: true,
   countSolutions: true,
   action: 'GENERATE',
-  numberToGenerate: 5,
+  numberToGenerate: 1,
 });
 
 export default Server.app;

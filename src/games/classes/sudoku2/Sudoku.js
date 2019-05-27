@@ -1,8 +1,647 @@
+import Game from '../../Game';
+import SudokuArray from './SudokuArray';
 import SudokuConstants from './SudokuConstants';
 import SudokuUtils from './SudokuUtils';
+import SudokuHistory from './SudokuHistory';
 import SudokuLogItem from './SudokuLogItem';
 
-export default class SudokuSolverMethods {
+/*
+ * TODO:
+ * - The possibilities things should be moved to Utils with a .bind on calls.
+ * - Same for shuffleArrays
+ * - Convert la réponse de init en objet.
+ */
+
+/**
+ * Sudoku Game generator and solver
+ * @typedef {SudokuGame} SudokuGame
+ * @extends {Game}
+ */
+export default class SudokuGame extends Game {
+  constructor(app, id) {
+    super(app, id, 'sudoku');
+
+    // this.settings = new SudokuSettings(this.app, this.id);
+
+    this.puzzle = new SudokuArray(SudokuConstants.BOARD_SIZE);
+    this.solution = new SudokuArray(SudokuConstants.BOARD_SIZE);
+    this.solutionRound = new SudokuArray(SudokuConstants.BOARD_SIZE);
+    this.possibilities = new SudokuArray(SudokuConstants.POSSIBILITY_SIZE);
+    this.randomBoardArray = SudokuArray.range(SudokuConstants.BOARD_SIZE);
+    this.randomPossibilityArray = SudokuArray.range(
+      SudokuConstants.ROW_COL_SEC_SIZE
+    );
+
+    // debug history
+    this.history = new SudokuHistory(
+      {
+        recordHistory: true,
+        logHistory: true,
+      },
+      this.isSolved
+    );
+
+    this.lastSolveRound = 0;
+  }
+
+  // get puzzle() {
+  //   return this.puzzle;
+  // }
+
+  get puzzleString() {
+    return SudokuUtils.toString(this.puzzle);
+  }
+
+  get solutionString() {
+    return SudokuUtils.toString(this.solution);
+  }
+
+  // set puzzle(initPuzzle) {
+  //   for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+  //     this.puzzle[i] = initPuzzle[i];
+  //   }
+  //   return this.reset();
+  // }
+
+  generatePuzzle() {
+    return this.generatePuzzleSymmetry(SudokuConstants.symmetryList.NONE);
+  }
+
+  generatePuzzleSymmetry(_symmetry) {
+    let symmetry;
+    if (symmetry === SudokuConstants.symmetryList.RANDOM)
+      symmetry = SudokuConstants.randomSymmetry;
+    else symmetry = _symmetry;
+    symmetry = SudokuConstants.symmetryList.NONE;
+
+    this.history.enabled = false;
+
+    this.clearPuzzle();
+
+    this.shuffleRandomArrays();
+
+    this.solve();
+
+    if (symmetry === SudokuConstants.symmetryList.NONE)
+      this.rollbackNonGuesses();
+
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      this.puzzle[i] = this.solution[i];
+    }
+
+    this.shuffleRandomArrays();
+
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      const pos = this.randomBoardArray[i];
+      if (this.puzzle[pos] > 0) {
+        let posSym1 = -1;
+        let posSym2 = -1;
+        let posSym3 = -1;
+        switch (symmetry) {
+          case SudokuConstants.symmetryList.ROTATE90:
+            posSym2 = SudokuUtils.rowColumnToCell(
+              SudokuConstants.ROW_COL_SEC_SIZE -
+                1 -
+                SudokuUtils.cellToColumn(pos),
+              SudokuUtils.cellToRow(pos)
+            );
+            posSym3 = SudokuUtils.rowColumnToCell(
+              SudokuUtils.cellToColumn(pos),
+              SudokuConstants.ROW_COL_SEC_SIZE - 1 - SudokuUtils.cellToRow(pos)
+            );
+            break;
+          case SudokuConstants.symmetryList.ROTATE180:
+            posSym1 = SudokuUtils.rowColumnToCell(
+              SudokuConstants.ROW_COL_SEC_SIZE - 1 - SudokuUtils.cellToRow(pos),
+              SudokuConstants.ROW_COL_SEC_SIZE -
+                1 -
+                SudokuUtils.cellToColumn(pos)
+            );
+            break;
+          case SudokuConstants.symmetryList.MIRROR:
+            posSym1 = SudokuUtils.rowColumnToCell(
+              SudokuUtils.cellToRow(pos),
+              SudokuConstants.ROW_COL_SEC_SIZE -
+                1 -
+                SudokuUtils.cellToColumn(pos)
+            );
+            break;
+          case SudokuConstants.symmetryList.FLIP:
+            posSym1 = SudokuUtils.rowColumnToCell(
+              SudokuConstants.ROW_COL_SEC_SIZE - 1 - SudokuUtils.cellToRow(pos),
+              SudokuUtils.cellToColumn(pos)
+            );
+            break;
+          default:
+            break;
+        }
+
+        const savedValue = this.puzzle[pos];
+        this.puzzle[pos] = 0;
+        let savedSym1 = 0;
+        if (posSym1 >= 0) {
+          savedSym1 = this.puzzle[posSym1];
+          this.puzzle[posSym1] = 0;
+        }
+        let savedSym2 = 0;
+        if (posSym2 >= 0) {
+          savedSym2 = this.puzzle[posSym2];
+          this.puzzle[posSym2] = 0;
+        }
+        let savedSym3 = 0;
+        if (posSym3 >= 0) {
+          savedSym3 = this.puzzle[posSym3];
+          this.puzzle[posSym3] = 0;
+        }
+
+        this.reset();
+        if (this.countSolutions(2, true) > 1) {
+          this.puzzle[pos] = savedValue;
+          if (posSym1 >= 0 && savedSym1 !== 0) this.puzzle[posSym1] = savedSym1;
+          if (posSym2 >= 0 && savedSym2 !== 0) this.puzzle[posSym2] = savedSym2;
+          if (posSym3 >= 0 && savedSym3 !== 0) this.puzzle[posSym3] = savedSym3;
+        }
+      }
+    }
+
+    this.reset();
+
+    this.history.enabled = true;
+
+    return true;
+  }
+
+  get difficulty() {
+    if (this.history.guessCount > 0)
+      return SudokuConstants.difficultyList.EXPERT;
+    if (this.history.boxLineReductionCount > 0)
+      return SudokuConstants.difficultyList.INTERMEDIATE;
+    if (this.history.pointingPairTripleCount > 0)
+      return SudokuConstants.difficultyList.INTERMEDIATE;
+    if (this.history.hiddenPairCount > 0)
+      return SudokuConstants.difficultyList.INTERMEDIATE;
+    if (this.history.nakedPairCount > 0)
+      return SudokuConstants.difficultyList.INTERMEDIATE;
+    if (this.history.hiddenSingleCount > 0)
+      return SudokuConstants.difficultyList.EASY;
+    if (this.history.singleCount > 0)
+      return SudokuConstants.difficultyList.SIMPLE;
+    return SudokuConstants.difficultyList.UNKNOWN;
+  }
+
+  get difficultyString() {
+    switch (this.difficulty) {
+      case SudokuConstants.difficultyList.EXPERT:
+        return 'Expert';
+      case SudokuConstants.difficultyList.INTERMEDIATE:
+        return 'Intermediate';
+      case SudokuConstants.difficultyList.EASY:
+        return 'Easy';
+      case SudokuConstants.difficultyList.SIMPLE:
+        return 'Simple';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  printPuzzle() {
+    return SudokuUtils.print(this.puzzle);
+  }
+
+  printSolution() {
+    return SudokuUtils.print(this.solution);
+  }
+
+  reset() {
+    this.solution.reset();
+    this.solutionRound.reset();
+    this.possibilities.reset();
+    this.history.reset();
+
+    const round = 1;
+    for (let pos = 0; pos < SudokuConstants.BOARD_SIZE; pos += 1) {
+      if (this.puzzle[pos] > 0) {
+        const valIndex = this.puzzle[pos] - 1;
+        const valPos = SudokuUtils.getPossibilityIndex(valIndex, pos);
+        const val = this.puzzle[pos];
+
+        if (this.possibilities[valPos] !== 0) return false;
+        this.mark(pos, round, val);
+        SudokuHistory.addHistoryItem(
+          new SudokuLogItem(
+            round,
+            SudokuConstants.debugLogTypesList.GIVEN,
+            val,
+            pos
+          )
+        );
+      }
+    }
+
+    return true;
+  }
+
+  clearPuzzle() {
+    this.puzzle.reset();
+    this.reset();
+  }
+
+  shuffleRandomArrays() {
+    this.randomBoardArray.shuffle();
+    this.randomPossibilityArray.shuffle();
+  }
+
+  mark(pos, round, value) {
+    if (this.solution[pos] !== 0) return false;
+    if (this.solutionRound[pos] !== 0) return false;
+    const valIndex = value - 1;
+    this.solution[pos] = value;
+
+    const possInd = SudokuUtils.getPossibilityIndex(valIndex, pos);
+    if (this.possibilities[possInd] !== 0) return false;
+
+    // Take the value out of the possibilities for the entire row
+    this.solutionRound[pos] = round;
+    const rowStart =
+      SudokuUtils.cellToRow(pos) * SudokuConstants.ROW_COL_SEC_SIZE;
+    for (let col = 0; col < SudokuConstants.ROW_COL_SEC_SIZE; col += 1) {
+      const rowVal = rowStart + col;
+      const valPos = SudokuUtils.getPossibilityIndex(valIndex, rowVal);
+      if (this.possibilities[valPos] === 0) this.possibilities[valPos] = round;
+    }
+
+    // Column
+    const colStart = SudokuUtils.cellToColumn(pos);
+    for (let row = 0; row < SudokuConstants.ROW_COL_SEC_SIZE; row += 1) {
+      const colVal = colStart + SudokuConstants.ROW_COL_SEC_SIZE * row;
+      const valPos = SudokuUtils.getPossibilityIndex(valIndex, colVal);
+      if (this.possibilities[valPos] === 0) this.possibilities[valPos] = round;
+    }
+
+    // Section
+    const secStart = SudokuUtils.cellToSectionStartCell(pos);
+    for (let i = 0; i < SudokuConstants.GRID_SIZE; i += 1) {
+      for (let j = 0; j < SudokuConstants.GRID_SIZE; j += 1) {
+        const secVal = secStart + i + SudokuConstants.ROW_COL_SEC_SIZE * j;
+        const valPos = SudokuUtils.getPossibilityIndex(valIndex, secVal);
+        if (this.possibilities[valPos] === 0)
+          this.possibilities[valPos] = round;
+      }
+    }
+
+    // The pos itself
+    for (
+      let _valIndex = 0;
+      _valIndex < SudokuConstants.ROW_COL_SEC_SIZE;
+      _valIndex += 1
+    ) {
+      const valPos = SudokuUtils.getPossibilityIndex(_valIndex, pos);
+      if (this.possibilities[valPos] === 0) this.possibilities[valPos] = round;
+    }
+  }
+
+  countPossibilities(pos) {
+    let count = 0;
+    for (
+      let valIndex = 0;
+      valIndex < SudokuConstants.ROW_COL_SEC_SIZE;
+      valIndex += 1
+    ) {
+      const valPos = SudokuUtils.getPossibilityIndex(valIndex, pos);
+      if (this.possibilities[valPos] === 0) count += 1;
+    }
+    return count;
+  }
+
+  arePossibilitiesSame(pos1, pos2) {
+    for (
+      let valIndex = 0;
+      valIndex < SudokuConstants.ROW_COL_SEC_SIZE;
+      valIndex += 1
+    ) {
+      const valPos1 = SudokuUtils.getPossibilityIndex(valIndex, pos1);
+      const valPos2 = SudokuUtils.getPossibilityIndex(valIndex, pos2);
+      if (
+        (this.possibilities[valPos1] === 0 ||
+          this.possibilities[valPos2] === 0) &&
+        (this.possibilities[valPos1] !== 0 || this.possibilities[valPos2] !== 0)
+      )
+        return false;
+    }
+    return true;
+  }
+
+  removePossibilitiesInOneFromTwo(pos1, pos2, round) {
+    let doneSomething = false;
+    for (
+      let valIndex = 0;
+      valIndex < SudokuConstants.ROW_COL_SEC_SIZE;
+      valIndex += 1
+    ) {
+      const valPos1 = SudokuUtils.getPossibilityIndex(valIndex, pos1);
+      const valPos2 = SudokuUtils.getPossibilityIndex(valIndex, pos2);
+      if (
+        this.possibilities[valPos1] === 0 &&
+        this.possibilities[valPos2] === 0
+      ) {
+        this.possibilities[valPos2] = round;
+        doneSomething = true;
+      }
+    }
+    return doneSomething;
+  }
+
+  /**
+   * Main function to generate a new Sudoku.
+   * @param {Object} [settings] - All of the settings
+   * @param {boolean} [settings.printPuzzle=false] - Whether or not to console.log the puzzle (DEBUG)
+   * @param {boolean} [settings.printSolution=false] - Whether or not to console.log the solution (DEBUG)
+   * @param {boolean} [settings.printHistory=false] - Whether or not to console.log the history (DEBUG)
+   * @param {boolean} [settings.printInstructions=false] - Whether or not to console.log the solve instructions (DEBUG)
+   * @param {boolean} [settings.timer=true] - Get the time it took
+   * @param {boolean} [settings.countSolutions=true] - Check the amount of solutions (should be 1)
+   * @param {'GENERATE' | 'SOLVE'} [settings.action='GENERATE'] - Whether or not to generate or solve a puzzle.
+   * @param {number} [settings.numberToGenerate=1] - The amount of puzzles to generate
+   * @param {boolean} [settings.printStats=false] - Print the stats of the puzzle (DEBUG)
+   * @param {number} [settings.difficulty=3] - The difficulty the puzzle should have
+   * @param {number} [settings.symmetry=2] - The symmetry the puzzle should have
+   */
+  init(settings) {
+    const applicationStartTime = SudokuUtils.getMicroSeconds;
+    let puzzleCount = 0;
+
+    // Settings
+    const printPuzzle = settings.printPuzzle || false;
+    const printSolution = settings.printSolution || false;
+    const printHistory = settings.printHistory || false;
+    const printInstructions = settings.printInstructions || false;
+    const timer = settings.timer || true;
+    const countSolutions = settings.countSolutions || true;
+    const action = settings.action || 'GENERATE';
+    const numberToGenerate = settings.numberToGenerate || 1;
+    const printStats = settings.printStats || false;
+    const difficulty =
+      settings.difficulty || SudokuConstants.difficultyList.INTERMEDIATE;
+    const symmetry =
+      settings.symmetry || SudokuConstants.symmetryList.ROTATE180;
+
+    this.history.recordHistory =
+      printHistory ||
+      printInstructions ||
+      printStats ||
+      difficulty !== SudokuConstants.difficultyList.UNKOWN;
+    this.history.logHistory = false;
+
+    let done = false;
+    let numberGenerated = 0;
+    while (!done) {
+      const puzzleStartTime = SudokuUtils.getMicroSeconds;
+
+      let havePuzzle = false;
+      if (action === 'GENERATE') {
+        havePuzzle = this.generatePuzzleSymmetry(symmetry);
+        if (!havePuzzle && printPuzzle)
+          throw new Error('Could not generate puzzle.');
+      } else {
+        throw new Error('Solve not implemented');
+      }
+
+      let solutions = 0;
+
+      if (havePuzzle) {
+        if (countSolutions) solutions = this.countSolutions();
+
+        if (
+          printHistory ||
+          printInstructions ||
+          printStats ||
+          difficulty !== SudokuConstants.difficultyList.UNKOWN
+        )
+          this.solve();
+
+        if (action === 'GENERATE') {
+          if (
+            difficulty !== SudokuConstants.difficultyList.UNKOWN &&
+            difficulty !== this.difficulty
+          ) {
+            havePuzzle = false;
+          } else {
+            numberGenerated += 1;
+            if (numberGenerated >= numberToGenerate) done = true;
+          }
+        }
+      }
+
+      if (havePuzzle) {
+        const puzzleDoneTime = SudokuUtils.getMicroSeconds;
+
+        if (printPuzzle) this.printPuzzle();
+
+        if (printSolution) this.printSolution();
+
+        if (printHistory) this.history.printSolveHistory();
+        if (printInstructions) this.history.printSolveInstructions();
+
+        if (countSolutions) {
+          if (solutions === 0)
+            console.log('There are no solutions to the puzzle.');
+          else if (solutions === 1)
+            console.log('The solution to the puzzle is unique.');
+          else console.log(`There are ${solutions} solutions to the puzzle.`);
+        }
+
+        if (timer) {
+          const t = (puzzleDoneTime - puzzleStartTime) / 1000;
+          console.log(`Time: ${t}ms`);
+        }
+
+        if (printStats) {
+          const {
+            givenCount,
+            singleCount,
+            hiddenSingleCount,
+            nakedPairCount,
+            hiddenPairCount,
+            pointingPairTripleCount,
+            boxLineReductionCount,
+            guessCount,
+            backtrackCount,
+            difficultyString,
+          } = this.history;
+
+          console.log(`Number of Givens: ${givenCount}`);
+          console.log(`Number of Singles: ${singleCount}`);
+          console.log(`Number of Hidden Singles: ${hiddenSingleCount}`);
+          console.log(`Number of Naked Pairs: ${nakedPairCount}`);
+          console.log(`Number of Hidden Pairs: ${hiddenPairCount}`);
+          console.log(
+            `Number of Pointing Pairs/Triples: ${pointingPairTripleCount}`
+          );
+          console.log(
+            `Number of Box/Line Intersections: ${boxLineReductionCount}`
+          );
+          console.log(`Number of Guesses: ${guessCount}`);
+          console.log(`Number of Backtracks: ${backtrackCount}`);
+          console.log(`Difficulty: ${difficultyString}`);
+        }
+
+        puzzleCount += 1;
+      }
+    }
+
+    const applicationDoneTime = SudokuUtils.getMicroSeconds();
+    if (timer) {
+      const t = (applicationDoneTime - applicationStartTime) / 1000000;
+      console.log(
+        `${puzzleCount} puzzle${puzzleCount === 1 ? '' : 's'} ${
+          action === 'GENERATE' ? 'generated' : 'solved'
+        } in ${t} seconds`
+      );
+    }
+  }
+
+  solve(round) {
+    console.log('solve', round);
+    this.printSolution();
+    if (!round || round <= 1) {
+      this.reset();
+      this.shuffleRandomArrays();
+      return this.solve(2);
+    }
+
+    this.lastSolveRound = round;
+
+    // console.log('puzzle');
+    // SudokuUtils.print(this.puzzle);
+    // console.log('solution');
+    // SudokuUtils.print(this.solution);
+
+    while (this.singleSolveMove(round)) {
+      if (this.isSolved) return true;
+      if (this.isImpossible) return false;
+    }
+
+    const nextGuessRound = round + 1;
+    const nextRound = round + 2;
+    for (
+      let guessNumber = 0;
+      this.guess(nextGuessRound, guessNumber);
+      guessNumber += 1
+    ) {
+      if (this.isImpossible || !this.solve(nextRound)) {
+        this.rollbackRound(nextRound);
+        this.rollbackRound(nextGuessRound);
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  countSolutions(round, limitToTwo) {
+    console.log('countSolutions', round, limitToTwo);
+    if (!round || round <= 1) {
+      this.history.enabled = false;
+      this.history.addHistoryItem(new SudokuLogItem('696969', 0));
+      console.log(this.history);
+      this.printPuzzle();
+      this.printSolution();
+      process.exit(0)
+
+      this.reset();
+      // SudokuUtils.print(this.solution);
+      // process.exit(0);
+      const solutionCount = this.countSolutions(2, false);
+
+      this.history.enabled = false;
+
+      return solutionCount;
+    }
+    while (this.singleSolveMove(round)) {
+      if (this.isSolved) {
+        this.rollbackRound(round);
+        return 1;
+      }
+      if (this.isImpossible) {
+        this.rollbackRound(round);
+        return 0;
+      }
+    }
+
+    let solutions = 0;
+    const nextRound = round + 1;
+    for (
+      let guessNumber = 0;
+      this.guess(nextRound, guessNumber);
+      guessNumber += 1
+    ) {
+      solutions += this.countSolutions(nextRound, limitToTwo);
+      if (limitToTwo && solutions >= 2) {
+        this.rollbackRound(round);
+        return solutions;
+      }
+    }
+    this.rollbackRound(round);
+    return solutions;
+  }
+
+  get isSolved() {
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      if (this.solution[i] === 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  singleSolveMove(round) {
+    if (this.onlyPossibilityForCell(round)) return true;
+    if (this.onlyValueInSection(round)) return true;
+    if (this.onlyValueInRow(round)) return true;
+    if (this.onlyValueInColumn(round)) return true;
+    if (this.handleNakedPairs(round)) return true;
+    if (this.pointingRowReduction(round)) return true;
+    if (this.pointingColumnReduction(round)) return true;
+    if (this.rowBoxReduction(round)) return true;
+    if (this.columnBoxReduction(round)) return true;
+    if (this.hiddenPairInRow(round)) return true;
+    if (this.hiddenPairInColumn(round)) return true;
+    if (this.hiddenPairInSection(round)) return true;
+    return false;
+  }
+
+  rollbackRound(round) {
+    this.history.addHistoryItem(
+      new SudokuLogItem(round, SudokuConstants.debugLogTypesList.ROLLBACK)
+    );
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      if (this.solutionRound[i] === round) {
+        this.solutionRound[i] = 0;
+        this.solution[i] = 0;
+      }
+    }
+    for (let i = 0; i < SudokuConstants.POSSIBILITY_SIZE; i += 1) {
+      if (this.possibilities[i] === round) {
+        this.possibilities[i] = 0;
+      }
+    }
+    this.history.solveInstructions.popTo(round);
+  }
+
+  rollbackNonGuesses() {
+    for (let i = 2; i <= this.lastSolveRound; i += 2) {
+      this.rollbackRound(i);
+    }
+  }
+
+  get givenCount() {
+    let count = 0;
+    for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
+      if (this.puzzle[i] !== 0) count += 1;
+    }
+    return count;
+  }
+
   findPositionWithFewestPossibilities() {
     let minPoss = 10;
     let bestPos = 0;

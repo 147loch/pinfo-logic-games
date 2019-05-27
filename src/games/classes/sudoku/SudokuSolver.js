@@ -1,7 +1,7 @@
 import SudokuSolverMethods from './SudokuSolverMethods';
 import SudokuLogItem from './SudokuLogItem';
 import SudokuConstants from './SudokuConstants';
-import SudokuUtils from './SudokuUtils';
+// import SudokuUtils from './SudokuUtils';
 
 /**
  * SudokuSolver class
@@ -9,18 +9,20 @@ import SudokuUtils from './SudokuUtils';
  */
 export default class SudokuSolver extends SudokuSolverMethods {
   solve(round) {
+    // console.log('solve', round);
+    // this.printSolution();
     if (!round || round <= 1) {
-      this.self.reset();
-      this.self.shuffleRandomArrays();
+      this.reset();
+      this.shuffleRandomArrays();
       return this.solve(2);
     }
 
-    this.self.lastSolveRound = round;
+    this.lastSolveRound = round;
 
-    console.log('puzzle');
-    SudokuUtils.print(this.self.puzzle);
-    console.log('solution');
-    SudokuUtils.print(this.self.solution);
+    // console.log('puzzle');
+    // SudokuUtils.print(this.puzzle);
+    // console.log('solution');
+    // SudokuUtils.print(this.solution);
 
     while (this.singleSolveMove(round)) {
       if (this.isSolved) return true;
@@ -45,22 +47,31 @@ export default class SudokuSolver extends SudokuSolverMethods {
   }
 
   countSolutions(round, limitToTwo) {
+    console.log('countSolutions', round, limitToTwo);
     if (!round || round <= 1) {
-      this.self.history.enabled = false;
+      this.history.enabled = false;
 
-      this.self.reset();
+      this.reset();
+      // SudokuUtils.print(this.solution);
+      // process.exit(0);
       const solutionCount = this.countSolutions(2, false);
 
-      this.self.history.enabled = false;
+      this.history.enabled = true;
 
       return solutionCount;
     }
     while (this.singleSolveMove(round)) {
       if (this.isSolved) {
+        console.log('solved');
+        this.printPuzzle()
+        this.printSolution()
         this.rollbackRound(round);
         return 1;
       }
       if (this.isImpossible) {
+        console.log('impossible');
+        this.printPuzzle()
+        this.printSolution()
         this.rollbackRound(round);
         return 0;
       }
@@ -85,7 +96,7 @@ export default class SudokuSolver extends SudokuSolverMethods {
 
   get isSolved() {
     for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
-      if (this.self.solution[i] === 0) {
+      if (this.solution[i] === 0) {
         return false;
       }
     }
@@ -109,33 +120,33 @@ export default class SudokuSolver extends SudokuSolverMethods {
   }
 
   rollbackRound(round) {
-    this.self.history.addHistoryItem(
+    this.history.addHistoryItem(
       new SudokuLogItem(round, SudokuConstants.debugLogTypesList.ROLLBACK)
     );
     for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
-      if (this.self.solutionRound[i] === round) {
-        this.self.solutionRound[i] = 0;
-        this.self.solution[i] = 0;
+      if (this.solutionRound[i] === round) {
+        this.solutionRound[i] = 0;
+        this.solution[i] = 0;
       }
     }
     for (let i = 0; i < SudokuConstants.POSSIBILITY_SIZE; i += 1) {
-      if (this.self.possibilities[i] === round) {
-        this.self.possibilities[i] = 0;
+      if (this.possibilities[i] === round) {
+        this.possibilities[i] = 0;
       }
     }
-    this.self.history.solveInstructions.popTo(round);
+    this.history.solveInstructions.popTo(round);
   }
 
   rollbackNonGuesses() {
-    for (let i = 2; i <= this.self.lastSolveRound; i += 2) {
-      SudokuSolver.rollbackRound(i);
+    for (let i = 2; i <= this.lastSolveRound; i += 2) {
+      this.rollbackRound(i);
     }
   }
 
   get givenCount() {
     let count = 0;
     for (let i = 0; i < SudokuConstants.BOARD_SIZE; i += 1) {
-      if (this.self.puzzle[i] !== 0) count += 1;
+      if (this.puzzle[i] !== 0) count += 1;
     }
     return count;
   }
