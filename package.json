@@ -9,7 +9,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "dev": "NODE_ENV=development nodemon ./index.js",
+    "dev": "nodemon ./index.js",
     "start": "node ./index.js"
   },
   "private": true,

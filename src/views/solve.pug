@@ -1,0 +1,22 @@
+extends layout
+
+block content
+  h1.ui.header Sudoku Solver
+
+  form(action="/solve", method="get")
+    .ui.form
+      .field
+        label Enter the puzzles
+        textarea#puz(rows='5', name='puz', required)=query.puz
+      .field
+        label Options
+        select.ui.dropdown#opts(multiple, name='opts[]', required)
+          option(value='') Select Options
+          option(value='printpuzzle', selected=(query.opts && query.opts.includes('printpuzzle')) ? true : false) Re-print Puzzle
+          option(value='countsolutions', selected=(query.opts && query.opts.includes('countsolutions')) ? true : false) Count Solutions
+          option(value='printhistory', selected=(query.opts && query.opts.includes('printhistory')) ? true : false) Print History
+          option(value='printinstructions', selected=(query.opts && query.opts.includes('printinstructions')) ? true : false) Print Instructions
+          option(value='timer', selected=(query.opts && query.opts.includes('timer')) ? true : false) Print Timer
+          option(value='printstats', selected=(query.opts && query.opts.includes('printstats')) ? true : false) Print Stats
+      .field
+        input.ui.primary.button(type='submit', value='Submit')

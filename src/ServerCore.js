@@ -35,6 +35,8 @@ export default class ServerCore {
     this.app.use(helmet());
     this.app.use(slashes(false));
 
+    process.env.NODE_ENV = 'development';
+
     if (process.env.NODE_ENV === 'development') {
       const bs = browserSync({
         port: 3030,

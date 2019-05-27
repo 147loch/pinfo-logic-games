@@ -1,11 +1,98 @@
 doctype html
 html
   head
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge,chrome=1')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0')
+    
     title= title
+    
     link(rel='stylesheet', href='/libraries/semantic/semantic.min.css')
-  body
-    .ui.container
+    style(type='text/css').
+      body {
+        background-color: #FFFFFF;
+      }
+      .ui.menu .item img.logo {
+        margin-right: 1.5em;
+      }
+      .main.container {
+        margin-top: 7em;
+      }
+      .wireframe {
+        margin-top: 2em;
+      }
+      .ui.footer.segment {
+        margin: 5em 0em 0em;
+        padding: 5em 0em;
+      }
+      .site {
+        display: flex;
+        min-height: 100vh;
+        flex-direction: column;
+      }
+      .ui.main {
+        flex: 1;
+      }
+
+      code {
+        background-color: #e2e4e6;
+        border: 1px solid #d6dadc;
+        border-radius: 2px;
+        color: #eb5a46;
+        padding: 1px 3px;
+        margin: -1px 2px;
+        display: block;
+        padding: 10px;
+      }
+
+  body.site
+    .ui.fixed.inverted.menu
+      .ui.container
+        a.header.item(href='/')
+          img.logo(src='/images/logo-small.png')
+          |         Sudoku Puzzle Website
+        a.item(href='/') Home
+        a.item(href='/generate') Generate
+        a.item(href='/solve') Solve
+    .ui.main.container
       block content
+    .ui.inverted.vertical.footer.segment
+      .ui.center.aligned.container          
+        .ui.inverted.section
+        img.ui.centered.mini.image(src='/images/logo-hex.png')
+        .ui.horizontal.inverted.small.divided.link.list
+          a.item(href='/solve') Solve
+          a.item(href='/generate') Generate
+          a.item(href='https://147lo.ch') Main Website
+          a.item(href='https://github.com/147loch/pinfo-logic-games') GitHub
 
   script(src="/libraries/jquery/jquery.min.js")
   script(src="/libraries/semantic/semantic.min.js")
+  script.
+    $(document)
+      .ready(() => {
+        $('.masthead')
+          .visibility({
+            once: false,
+            onBottomPassed: function() {
+              $('.fixed.menu').transition('fade in');
+            },
+            onBottomPassedReverse: function() {
+              $('.fixed.menu').transition('fade out');
+            }
+          });
+
+        $('.ui.sidebar')
+          .sidebar('attach events', '.toc.item');
+        
+        $('.message .close')
+          .on('click', function() {
+            $(this)
+              .closest('.message')
+              .transition('fade');
+          });
+
+        $('select.dropdown')
+          .dropdown();
+        $('.ui.selection.dropdown').dropdown();
+      });

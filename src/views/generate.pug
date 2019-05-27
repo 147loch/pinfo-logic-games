@@ -1,0 +1,52 @@
+extends layout
+
+block content
+  h1.ui.header Sudoku Generator
+
+  form(action="/generate", method="get")
+    .ui.form
+      .field
+        label How many?
+        input#generatenumber(required, type='number', name='generatenumber', min='1', max='20', placeholder='Number of Sudokus', value=(query.generatenumber) ? query.generatenumber : 1)
+      .three.fields
+        .field
+          label Difficulty
+          .ui.selection.dropdown
+            input(type='hidden', name='difficultyselect', value=(query.difficultyselect) ? query.difficultyselect : '')
+            i.dropdown.icon
+            .default.text Choose a Difficulty
+            .menu
+              .item(data-value='0') Any
+              .item(data-value='1') Simple
+              .item(data-value='2') Easy
+              .item(data-value='3') Intermediate
+              .item(data-value='4') Expert
+        .field
+          label Symmetry
+          .ui.selection.dropdown
+            input(type='hidden', name='symmetryselect', value=(query.symmetryselect) ? query.symmetryselect : '')
+            i.dropdown.icon
+            .default.text Choose a Symmetry
+            .menu
+              .item(data-value='0') None
+              .item(data-value='1') Rotate 90°
+              .item(data-value='2') Rotate 180°
+              .item(data-value='3') Mirror
+              .item(data-value='4') Flip
+              .item(data-value='5') Random
+        .field
+          label Options
+          select.ui.dropdown#opts(multiple, name='opts[]')
+            option(value='') Select Options
+            option(value='printsolution', selected=(query.opts && query.opts.includes('printsolution')) ? true : false) Print Solution
+            option(value='printhistory', selected=(query.opts && query.opts.includes('printhistory')) ? true : false) Print History
+            option(value='printinstructions', selected=(query.opts && query.opts.includes('printinstructions')) ? true : false) Print Instructions
+            option(value='timer', selected=(query.opts && query.opts.includes('timer')) ? true : false) Print Timer
+            option(value='printstats', selected=(query.opts && query.opts.includes('printstats')) ? true : false) Rating
+      .field
+        input.ui.primary.button(type='submit', value='Submit')
+  
+  if result.success === true
+    .ui.divider
+    .ui.segment
+      code=result.output

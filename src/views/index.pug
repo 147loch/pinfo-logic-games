@@ -1,5 +1,33 @@
 extends layout
 
 block content
-  h1= title
-  p Welcome to #{title}
+  h1.ui.header Sudoku Generator and Solver
+
+  .ui.message.info
+    .header
+      | Disclaimer
+    p
+      | This website was only made to demonstrate the workings of the backend Sudoku generation system. It is not a final version and it will be improved as time goes on.
+
+
+  .ui.placeholder.segment
+    .ui.two.column.stackable.center.aligned.grid
+      .ui.vertical.divider Or
+      .middle.aligned.row
+        .column
+          .ui.icon.header
+            i.search.icon
+            | Solve a Sudoku
+          form(action="/solve", method="get")
+            .ui.form
+              .field
+                textarea#puz(rows='2', name='puz')
+              .field
+                input.ui.primary.button(type='submit', value='Submit')
+              
+        .column
+          .ui.icon.header
+            i.add.icon
+            | Generate a new puzzle
+          a.ui.primary.button(href='/generate')
+            | Create
