@@ -1,5 +1,5 @@
 /* eslint-disable no-bitwise */
-import Game from '../Game';
+import Game from '../../Game';
 import SudokuUtils from './SudokuUtils';
 import SudokuGenerator from './SudokuGenerator';
 

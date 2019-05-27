@@ -122,7 +122,6 @@ export default class SudokuGame extends aggregation(
     if (symmetry === SudokuConstants.symmetryList.RANDOM)
       symmetry = SudokuConstants.randomSymmetry;
     else symmetry = _symmetry;
-    console.log(symmetry)
     // symmetry = SudokuConstants.symmetryList.NONE;
 
     this.history.enabled = false;

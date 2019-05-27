@@ -541,13 +541,6 @@ export default class SudokuGame extends Game {
   countSolutions(round, limitToTwo) {
     console.log('countSolutions', round, limitToTwo);
     if (!round || round <= 1) {
-      this.history.enabled = false;
-      this.history.addHistoryItem(new SudokuLogItem('696969', 0));
-      console.log(this.history);
-      this.printPuzzle();
-      this.printSolution();
-      process.exit(0)
-
       this.reset();
       // SudokuUtils.print(this.solution);
       // process.exit(0);
