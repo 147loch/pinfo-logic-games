@@ -71,7 +71,7 @@ block head
       padding-left: 1em;
       text-align: left;
     }
-    #optionsarea .button, #optionsarea img {
+    #optionsarea img {
       padding: 0.25em;
       margin: 0.1em;
       font-size: 100%;
@@ -177,58 +177,28 @@ block content
     #entiregame
       #gamecolumns
         #playingarea
-          #game
+          #game.ui.segment
         #optionsarea
-          input#pausebutton.button(type='button', value='Pause', onclick='pauseGame();')
-          input#hintbutton.button(name='hintButton', type='button', value='Hint', onclick='hint();')
-          img(src='/images/linkicon.png', onclick="return toggleDisp('ingamelinks');")
+          input#pausebutton.ui.primary.button(type='button', value='Pause', onclick='pauseGame();', style="margin-bottom: 5px")
+          input#hintbutton.ui.primary.button(name='hintButton', type='button', value='Hint', onclick='hint();')
+          a.ui.primary.button(onclick="return toggleDisp('ingamelinks');") Link
           #ingamelinks
           #hint
           #markingcolors
-            table
-              tbody
-                tr
-                  td
-                    label(style='color:#3D613D;')
-                      input(type='radio', name='color', value='#3D613D', checked='')
-                      | Green
-                  td
-                    input(type='button', value='Clear', style='color:#3D613D;', onclick="clearColor('#3D613D')")
-                tr
-                  td
-                    label(style='color:#204864;')
-                      input(type='radio', name='color', value='#204864')
-                      | Blue
-                  td
-                    input(type='button', value='Clear', style='color:#204864;', onclick="clearColor('#204864')")
-                tr
-                  td
-                    label(style='color:#79215A;')
-                      input(type='radio', name='color', value='#79215A')
-                      | Purple
-                  td
-                    input(type='button', value='Clear', style='color:#79215A;', onclick="clearColor('#79215A')")
-                tr
-                  td
-                    label(style='color:#9C2B2B;')
-                      input(type='radio', name='color', value='#9C2B2B')
-                      | Red
-                  td
-                    input(type='button', value='Clear', style='color:#9C2B2B;', onclick="clearColor('#9C2B2B')")
-                tr
-                  td
-                    label(style='color:#363636;')
-                      input(type='radio', name='color', value='#363636')
-                      | Black
-                  td
-                    input(type='button', value='Clear', style='color:#363636;', onclick="clearColor('#363636')")
-                tr
-                  td
-                    label(style='color:#999999;')
-                      input(type='radio', name='color', value='#999999')
-                      | Gray
-                  td
-                    input(type='button', value='Clear', style='color:#999999;', onclick="clearColor('#999999')")
+            .grouped.fields
+              label Color
+              .field
+                .ui.radio.checkbox
+                  input(type='radio', name='color', value='#9C2B2B')
+                  label(style='color:#9C2B2B;') Red
+              .field    
+                input.ui.button(type='button', value='Clear', onclick="clearColor('#9C2B2B')")
+              .field
+                .ui.radio.checkbox
+                  input(type='radio', name='color', value='#204864', checked)
+                  label(style='color:#204864;') Blue
+              .field    
+                input.ui.button(type='button', value='Clear', onclick="clearColor('#204864')")
     #testcell
     #resumescreen
       p
