@@ -45,6 +45,11 @@ html
         padding: 10px;
       }
 
+      code pre {
+        margin: 0;
+      }
+    block head
+
   body.site
     .ui.fixed.inverted.menu
       .ui.container
@@ -54,6 +59,7 @@ html
         a.item(href='/') Home
         a.item(href='/generate') Generate
         a.item(href='/solve') Solve
+        a.item(href='/play') Play
     .ui.main.container
       block content
     .ui.inverted.vertical.footer.segment
@@ -68,6 +74,7 @@ html
 
   script(src="/libraries/jquery/jquery.min.js")
   script(src="/libraries/semantic/semantic.min.js")
+  block scripts
   script.
     $(document)
       .ready(() => {
@@ -95,4 +102,5 @@ html
         $('select.dropdown')
           .dropdown();
         $('.ui.selection.dropdown').dropdown();
+        $('.ui.checkbox').checkbox();
       });

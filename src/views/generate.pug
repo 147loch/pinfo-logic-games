@@ -1,9 +1,12 @@
 extends layout
 
+block scripts
+  script(src="/js/sudoku/sudoku-html.min.js")
+
 block content
   h1.ui.header Sudoku Generator
 
-  form(action="/generate", method="get")
+  form(name="generateform", onsubmit="return false;")
     .ui.form
       .field
         label How many?
@@ -12,7 +15,7 @@ block content
         .field
           label Difficulty
           .ui.selection.dropdown
-            input(type='hidden', name='difficultyselect', value=(query.difficultyselect) ? query.difficultyselect : '')
+            input(type='hidden', name='difficultyselect', value='0')
             i.dropdown.icon
             .default.text Choose a Difficulty
             .menu
@@ -24,7 +27,7 @@ block content
         .field
           label Symmetry
           .ui.selection.dropdown
-            input(type='hidden', name='symmetryselect', value=(query.symmetryselect) ? query.symmetryselect : '')
+            input(type='hidden', name='symmetryselect', value='2')
             i.dropdown.icon
             .default.text Choose a Symmetry
             .menu
@@ -35,18 +38,49 @@ block content
               .item(data-value='4') Flip
               .item(data-value='5') Random
         .field
-          label Options
-          select.ui.dropdown#opts(multiple, name='opts[]')
-            option(value='') Select Options
-            option(value='printsolution', selected=(query.opts && query.opts.includes('printsolution')) ? true : false) Print Solution
-            option(value='printhistory', selected=(query.opts && query.opts.includes('printhistory')) ? true : false) Print History
-            option(value='printinstructions', selected=(query.opts && query.opts.includes('printinstructions')) ? true : false) Print Instructions
-            option(value='timer', selected=(query.opts && query.opts.includes('timer')) ? true : false) Print Timer
-            option(value='printstats', selected=(query.opts && query.opts.includes('printstats')) ? true : false) Rating
+          label Output Format
+          .ui.selection.dropdown
+            input(type='hidden', name='outputselect', value='2')
+            i.dropdown.icon
+            .default.text Choose a Format
+            .menu
+              .item(data-value='2') Readable
+              .item(data-value='1') Compact
+              .item(data-value='0') One line
+              .item(data-value='3') CSV
+      .inline.fields
+        label Options
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='0', name='printsolution')
+            label Solution
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='1', name='printhistory')
+            label History
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='2', name='printinstructions')
+            label Solve Instructions
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='3', name='timer')
+            label Timer
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='4', name='printstats', checked)
+            label Rating
+      
+      .ui.inverted.dimmer#loader
+        .ui.text.loader Working
+
+      .ui.negative.message.hidden#errorParent
+        .header Error
+        p#error Message
       .field
-        input.ui.primary.button(type='submit', value='Submit')
+        input.ui.primary.button(type='submit', name='generatebutton', value='Submit', onclick="generate(this.form);")
   
-  if result.success === true
-    .ui.divider
-    .ui.segment
-      code=result.output
+  .ui.divider
+  .ui.segment
+    code
+      pre#output

@@ -1,0 +1,254 @@
+extends layout
+
+block head
+  style.
+    .gamecontrollinks {
+      list-style-type: none;
+      padding-left: 0;
+      margin-left: 0;
+    }
+    #newgamediv, #endgamescreen, #gamelinks, #newgamemessage, #pausescreen, #resumescreen, #options {
+      text-align: center;
+    }
+    #gamelinks {
+      margin: 1em 0;
+    }
+    #newgamemessage {
+      max-width: 30em;
+      margin: 3em auto;
+      font-size: 200%;
+    }
+    #resumescreen{
+      margin: 3em 0;
+    }
+    #endgamescreen, #resumescreen {
+      font-size: 200%;
+    }
+    #endgamescreen {
+      margin: 1em 0;
+    }
+    .unselectable {
+      -moz-user-select: -moz-none;
+      -khtml-user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    #stats table {
+      border-collapse: collapse;
+      margin: 1em auto;
+      max-width: 25em;
+    }
+    #stats th, #stats td {
+      border: 2px solid #CFE6CF;
+      padding: 0.4em;
+    }
+    #game .given {
+      color: #BF9060;
+    }
+    #game .hintcell,#hint {
+      background-color: #FCFAA4;
+    }
+    #ingamelinks, #gamelinks {
+      display: none;
+    }
+    #gamecolumns {
+      display: table;
+      margin: 0 auto;
+    }
+    #playingarea, #optionsarea {
+      display: table-cell;
+      vertical-align: top;
+    }
+    @media screen and (max-width: 610px){
+      #gamecolumns,#playingarea, #optionsarea {
+        display: inline-block;
+        margin: 0 auto;
+      }
+    }
+    #optionsarea {
+      width: 15em;
+      padding-left: 1em;
+      text-align: left;
+    }
+    #optionsarea .button, #optionsarea img {
+      padding: 0.25em;
+      margin: 0.1em;
+      font-size: 100%;
+      vertical-align: middle;
+      cursor: pointer;
+    }
+    .textlink {
+      white-space: nowrap;
+      font-family: "Courier New", Courier, monospace;
+      overflow: auto;
+    }
+
+    #optionsarea .textlink {
+      width: 15em;
+    }
+
+    #markingcolors {
+      margin: 1em 0;
+    }
+    #markingcolors input {
+      margin: 0 0.5em;
+    }
+    #game table {
+      border-collapse: collapse;
+    }
+    #game td.sudokusection {
+      border:2px solid #598059;
+    }
+    #game td.cell {
+      border:1px solid #598059;
+    }
+    #entiregame {
+      text-align: center;
+    }
+    #gamelinks {
+      text-align: left;
+    }
+    #hint {
+      font-size: 120%;
+      padding: 1em;
+      margin: 1em 0;
+      border-radius: 0.5em;
+    }
+    #instructions {
+      max-width: 40em;
+      margin: 1em auto;
+    }
+
+block scripts
+  script(src="/js/sudoku/sudoku-play.min.js")
+
+block content
+  #head
+  #foot
+  form.ui.form(onsubmit='return false', name='gameform')
+    #gamelinks
+    #endgamescreen
+      p
+        span#endgamemessage
+        img(src='/images/linkicon.png', onclick="return toggleDisp('gamelinks');")
+    #pausescreen
+      h1
+        | Sudoku paused 
+        img(src='/images/linkicon.png', onclick="return toggleDisp('gamelinks');")
+      #elapsedtime
+      input.button.mainbutton(type='button', value='Resume Game', onclick='resumeGame();')
+      div
+        p
+          input.button(type='button', value='Quit', onclick="recordgaveup();showScreen('title');")
+      ul#pauselinks.gamecontrollinks
+        li
+          a(href='#', onclick="return toggleDisp('instructions');") Instructions
+    #titlescreen
+      #newgamediv
+        p
+          input.ui.large.primary.button(name='newgamebutton', type='button', value='New Game', onclick='newQQwingGame()')
+        #options
+          #difficultyoption
+            p
+              | Difficulty: 
+              select(name='difficultyselect')
+          .field(style="width: 25%;text-align: center;display: inline-block;")
+            label Symmetry
+            .ui.selection.dropdown
+              input(type="hidden", name="symmetryselect", value="5")
+              i.dropdown.icon
+              .default.text Gender
+              .menu
+                .item(data-value='0') None
+                .item(data-value='1') Rotational symmetry 90°
+                .item(data-value='2') Rotational symmetry 180°
+                .item(data-value='3') Mirror image left to right
+                .item(data-value='4') Mirror image top and bottom
+                .item(data-value='5', selected) Random
+          p
+            a(href='#', onclick='return startBlank();') Start with a blank board
+        ul#titlelinks.gamecontrollinks
+          li
+            a(href='#', onclick="return toggleDisp('options');") Options
+          li
+            a(href='#', onclick="return toggleDisp('instructions');") Instructions
+    #newgamemessage
+    #entiregame
+      #gamecolumns
+        #playingarea
+          #game
+        #optionsarea
+          input#pausebutton.button(type='button', value='Pause', onclick='pauseGame();')
+          input#hintbutton.button(name='hintButton', type='button', value='Hint', onclick='hint();')
+          img(src='/images/linkicon.png', onclick="return toggleDisp('ingamelinks');")
+          #ingamelinks
+          #hint
+          #markingcolors
+            table
+              tbody
+                tr
+                  td
+                    label(style='color:#3D613D;')
+                      input(type='radio', name='color', value='#3D613D', checked='')
+                      | Green
+                  td
+                    input(type='button', value='Clear', style='color:#3D613D;', onclick="clearColor('#3D613D')")
+                tr
+                  td
+                    label(style='color:#204864;')
+                      input(type='radio', name='color', value='#204864')
+                      | Blue
+                  td
+                    input(type='button', value='Clear', style='color:#204864;', onclick="clearColor('#204864')")
+                tr
+                  td
+                    label(style='color:#79215A;')
+                      input(type='radio', name='color', value='#79215A')
+                      | Purple
+                  td
+                    input(type='button', value='Clear', style='color:#79215A;', onclick="clearColor('#79215A')")
+                tr
+                  td
+                    label(style='color:#9C2B2B;')
+                      input(type='radio', name='color', value='#9C2B2B')
+                      | Red
+                  td
+                    input(type='button', value='Clear', style='color:#9C2B2B;', onclick="clearColor('#9C2B2B')")
+                tr
+                  td
+                    label(style='color:#363636;')
+                      input(type='radio', name='color', value='#363636')
+                      | Black
+                  td
+                    input(type='button', value='Clear', style='color:#363636;', onclick="clearColor('#363636')")
+                tr
+                  td
+                    label(style='color:#999999;')
+                      input(type='radio', name='color', value='#999999')
+                      | Gray
+                  td
+                    input(type='button', value='Clear', style='color:#999999;', onclick="clearColor('#999999')")
+    #testcell
+    #resumescreen
+      p
+        | Game will resume in: 
+        span#resumecount
+    .ui.segment#instructions
+      h4.ui.header#instructions-for-sudoku Instructions for Sudoku
+      p This Sudoku playing board will help you solve the puzzles.
+      ol.ui.list
+        li
+          | The goal of the game is to choose a number for each square such that no digit appears twice in any row, column, or section.
+        li
+          | Start a new game with your desired level of difficulty.
+        li
+          | Click on a possibility to choose that number for the square. The possibility will be removed from other squares in the row, column, and section.
+        li
+          | Hold down control, alt, or shift to and click on a possibility to remove the possibility from the square, but not mark the square.
+        li
+          | Click on an assigned number to remove it from the square and put back any possibilities.
+        li
+          | Use the colors however you wish. You may find it helpful to switch the color whenever you guess.
+    #statsarea
+      #stats

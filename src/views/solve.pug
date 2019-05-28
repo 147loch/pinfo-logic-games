@@ -1,22 +1,64 @@
 extends layout
 
+block scripts
+  script(src="/js/sudoku/sudoku-html.min.js")
+
 block content
   h1.ui.header Sudoku Solver
-
-  form(action="/solve", method="get")
+  
+  form(name="generateform", onsubmit="return false;")
     .ui.form
       .field
         label Enter the puzzles
-        textarea#puz(rows='5', name='puz', required)=query.puz
+        textarea#puz(rows='5', name='tosolve', required)=query.puz
       .field
+        label Output Format
+        .ui.selection.dropdown
+          input(type='hidden', name='outputselect', value='2')
+          i.dropdown.icon
+          .default.text Choose a Format
+          .menu
+            .item(data-value='2') Readable
+            .item(data-value='1') Compact
+            .item(data-value='0') One line
+            .item(data-value='3') CSV
+      .inline.fields
         label Options
-        select.ui.dropdown#opts(multiple, name='opts[]', required)
-          option(value='') Select Options
-          option(value='printpuzzle', selected=(query.opts && query.opts.includes('printpuzzle')) ? true : false) Re-print Puzzle
-          option(value='countsolutions', selected=(query.opts && query.opts.includes('countsolutions')) ? true : false) Count Solutions
-          option(value='printhistory', selected=(query.opts && query.opts.includes('printhistory')) ? true : false) Print History
-          option(value='printinstructions', selected=(query.opts && query.opts.includes('printinstructions')) ? true : false) Print Instructions
-          option(value='timer', selected=(query.opts && query.opts.includes('timer')) ? true : false) Print Timer
-          option(value='printstats', selected=(query.opts && query.opts.includes('printstats')) ? true : false) Print Stats
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='0', name='printpuzzle')
+            label Print Puzzle
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='2', name='countsolutions')
+            label Count Solutions
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='3', name='printhistory')
+            label History
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='4', name='printinstructions')
+            label Instructions
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='5', name='timer')
+            label Timer
+        .field
+          .ui.toggle.checkbox
+            input.hidden(type='checkbox', tabindex='6', name='printstats', checked) 
+            label Stats
+      
+      .ui.inverted.dimmer#loader
+        .ui.text.loader Working
+
+      .ui.negative.message.hidden#errorParent
+        .header Error
+        p#error Message
       .field
-        input.ui.primary.button(type='submit', value='Submit')
+        input.ui.primary.button(type='submit', name='solvebutton', value='Solve', onclick="solve(this.form);")
+  
+  .ui.divider
+  .ui.segment
+    code
+      pre#output
