@@ -8,6 +8,6 @@ export default class IndexRoute extends Route {
   }
 
   get(req, res) {
-    res.render(this.id, { title: this.title, query: req.query });
+    res.render(this.id, { title: this.title, query: req.query, id: this.id });
   }
 }

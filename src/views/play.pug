@@ -149,11 +149,11 @@ block content
         p
           input.ui.large.primary.button(name='newgamebutton', type='button', value='New Game', onclick='newSudokuGame()')
         #options
-          #difficultyoption
-            p
-              | Difficulty: 
-              select(name='difficultyselect')
-          .field(style="width: 25%;text-align: center;display: inline-block;")
+          .field#difficultyoption
+            label Difficulty: 
+            select.ui.selection.dropdown(name='difficultyselect')
+          br
+          .field
             label Symmetry
             .ui.selection.dropdown
               input(type="hidden", name="symmetryselect", value="5")

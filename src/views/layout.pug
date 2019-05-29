@@ -12,20 +12,21 @@ html
       body {
         background-color: #FFFFFF;
       }
+
       .ui.menu .item img.logo {
         margin-right: 1.5em;
       }
+
       .main.container {
         margin-top: 7em;
       }
-      .wireframe {
-        margin-top: 2em;
-      }
+
       .ui.footer.segment {
         margin: 5em 0em 0em;
         padding: 5em 0em;
       }
-      .site {
+
+      .pusher {
         display: flex;
         min-height: 100vh;
         flex-direction: column;
@@ -48,18 +49,44 @@ html
       code pre {
         margin: 0;
       }
+
+      .ui.fixed.inverted.menu .toc.item {
+        display: none;
+      }
+      
+      @media only screen and (max-width: 768px) {
+        .ui.fixed.inverted.menu .item:not(.header),
+        .ui.fixed.inverted.menu .menu {
+          display: none;
+        }
+        .ui.fixed.inverted.menu .toc.item {
+          display: flex;
+        }
+
+        .stackable.grid .ui.vertical.divider {
+          display: none !important;
+        }
+      }
+
     block head
 
   body.site
-    .ui.fixed.inverted.menu
+    .ui.top.fixed.inverted.menu
       .ui.container
         a.header.item(href='/')
           img.logo(src='/images/logo-small.png')
-          |         Sudoku Puzzle Website
-        a.item(href='/') Home
-        a.item(href='/generate') Generate
-        a.item(href='/solve') Solve
-        a.item(href='/play') Play
+          | Sudoku Puzzle Website
+        a.toc.item
+          i.sidebar.icon
+        a.item(href='/', class=(id==='index') ? 'active' : '') Home
+        a.item(href='/generate', class=(id==='generate') ? 'active' : '') Generate
+        a.item(href='/solve', class=(id==='solve') ? 'active' : '') Solve
+        a.item(href='/play', class=(id==='play') ? 'active' : '') Play
+    .ui.vertical.inverted.sidebar.menu
+      a.item(href='/', class=(id==='index') ? 'active' : '') Home
+      a.item(href='/generate', class=(id==='generate') ? 'active' : '') Generate
+      a.item(href='/solve', class=(id==='solve') ? 'active' : '') Solve
+      a.item(href='/play', class=(id==='play') ? 'active' : '') Play
     .ui.main.container
       block content
     .ui.inverted.vertical.footer.segment
@@ -78,17 +105,6 @@ html
   script.
     $(document)
       .ready(() => {
-        $('.masthead')
-          .visibility({
-            once: false,
-            onBottomPassed: function() {
-              $('.fixed.menu').transition('fade in');
-            },
-            onBottomPassedReverse: function() {
-              $('.fixed.menu').transition('fade out');
-            }
-          });
-
         $('.ui.sidebar')
           .sidebar('attach events', '.toc.item');
         
