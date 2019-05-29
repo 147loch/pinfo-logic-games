@@ -137,10 +137,10 @@ block content
         | Sudoku paused 
         img(src='/images/linkicon.png', onclick="return toggleDisp('gamelinks');")
       #elapsedtime
-      input.button.mainbutton(type='button', value='Resume Game', onclick='resumeGame();')
+      input.ui.large.primary.button(type='button', value='Resume Game', onclick='resumeGame();')
       div
         p
-          input.button(type='button', value='Quit', onclick="recordgaveup();showScreen('title');")
+          input.ui.primary.button(type='button', value='Quit', onclick="recordgaveup();showScreen('title');")
       ul#pauselinks.gamecontrollinks
         li
           a(href='#', onclick="return toggleDisp('instructions');") Instructions
