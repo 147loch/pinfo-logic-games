@@ -147,7 +147,7 @@ block content
     #titlescreen
       #newgamediv
         p
-          input.ui.large.primary.button(name='newgamebutton', type='button', value='New Game', onclick='newQQwingGame()')
+          input.ui.large.primary.button(name='newgamebutton', type='button', value='New Game', onclick='newSudokuGame()')
         #options
           #difficultyoption
             p
@@ -165,7 +165,7 @@ block content
                 .item(data-value='2') Rotational symmetry 180°
                 .item(data-value='3') Mirror image left to right
                 .item(data-value='4') Mirror image top and bottom
-                .item(data-value='5', selected) Random
+                .item(data-value='5') Random
           p
             a(href='#', onclick='return startBlank();') Start with a blank board
         ul#titlelinks.gamecontrollinks

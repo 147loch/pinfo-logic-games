@@ -4,7 +4,7 @@ export default class IndexRoute extends Route {
   constructor(app) {
     super(app, '/', ['get']);
     this.id = 'index';
-    this.title = 'Loïc\'s Sudoku Website';
+    this.title = "Loïc's Sudoku Website";
   }
 
   get(req, res) {
