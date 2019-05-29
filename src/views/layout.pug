@@ -7,6 +7,7 @@ html
     
     title= title
     
+    link(rel="shortcut icon", href="/images/logo-small.png", type="image/png")
     link(rel='stylesheet', href='/libraries/semantic/semantic.min.css')
     style(type='text/css').
       body {
@@ -71,33 +72,34 @@ html
     block head
 
   body.site
-    .ui.top.fixed.inverted.menu
-      .ui.container
-        a.header.item(href='/')
-          img.logo(src='/images/logo-small.png')
-          | Sudoku Puzzle Website
-        a.toc.item
-          i.sidebar.icon
-        a.item(href='/', class=(id==='index') ? 'active' : '') Home
-        a.item(href='/generate', class=(id==='generate') ? 'active' : '') Generate
-        a.item(href='/solve', class=(id==='solve') ? 'active' : '') Solve
-        a.item(href='/play', class=(id==='play') ? 'active' : '') Play
     .ui.vertical.inverted.sidebar.menu
       a.item(href='/', class=(id==='index') ? 'active' : '') Home
       a.item(href='/generate', class=(id==='generate') ? 'active' : '') Generate
       a.item(href='/solve', class=(id==='solve') ? 'active' : '') Solve
       a.item(href='/play', class=(id==='play') ? 'active' : '') Play
-    .ui.main.container
-      block content
-    .ui.inverted.vertical.footer.segment
-      .ui.center.aligned.container          
-        .ui.inverted.section
-        img.ui.centered.mini.image(src='/images/logo-hex.png')
-        .ui.horizontal.inverted.small.divided.link.list
-          a.item(href='/solve') Solve
-          a.item(href='/generate') Generate
-          a.item(href='https://147lo.ch') Main Website
-          a.item(href='https://github.com/147loch/pinfo-logic-games') GitHub
+    .pusher
+      .ui.top.fixed.inverted.menu
+        .ui.container
+          a.header.item(href='/')
+            img.logo(src='/images/logo-small.png')
+            | Sudoku Puzzle Website
+          a.toc.item
+            i.sidebar.icon
+          a.item(href='/', class=(id==='index') ? 'active' : '') Home
+          a.item(href='/generate', class=(id==='generate') ? 'active' : '') Generate
+          a.item(href='/solve', class=(id==='solve') ? 'active' : '') Solve
+          a.item(href='/play', class=(id==='play') ? 'active' : '') Play
+      .ui.main.container
+        block content
+      .ui.inverted.vertical.footer.segment
+        .ui.center.aligned.container          
+          .ui.inverted.section
+          img.ui.centered.mini.image(src='/images/logo-hex.png')
+          .ui.horizontal.inverted.small.divided.link.list
+            a.item(href='/solve') Solve
+            a.item(href='/generate') Generate
+            a.item(href='https://147lo.ch') Main Website
+            a.item(href='https://github.com/147loch/pinfo-logic-games') GitHub
 
   script(src="/libraries/jquery/jquery.min.js")
   script(src="/libraries/semantic/semantic.min.js")
